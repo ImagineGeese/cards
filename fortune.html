@@ -579,12 +579,12 @@
             <ul>
                 <li>Single Face Card (J, Q, K, A) scores 1, 2, 3, 4 points respectively</li>
                 <li>A Pair (two same value) scores 5 points</li>
-                <li>Three of a Kind scores 10 points</li>
-                <li>Four of a Kind scores 20 points</li>
                 <li>Run (3 cards in order) scores 15 points</li>
                 <li>Run (4 cards in order) scores 25 points</li>
-                <li>Run (5 cards in order) scores 40 points</li>
+                <li>Three of a Kind scores 30 points</li>
+                <li>Straight (5 cards in order) scores 40 points</li>
                 <li>Flush (5 cards same suit) scores 50 points</li>
+                <li>Four of a Kind scores 80 points</li>
             </ul>
             <p>Game ends when you run out of cards in the deck or have a hand with no valid sets.</p>
         </div>
@@ -894,7 +894,7 @@
             
             // Check for three of a kind
             if (cards.length === 3 && cards[0].value === cards[1].value && cards[1].value === cards[2].value) {
-                return { valid: true, type: 'Three of a Kind', points: 10 };
+                return { valid: true, type: 'Three of a Kind', points: 30 };
             }
             
             // Check for four of a kind
@@ -918,14 +918,14 @@
                 }
             }
             
-            // Check for a run of 5
+            // Check for a Straight (5 cards in sequential order)
             if (cards.length === 5) {
                 const values = sortedCards.map(card => getCardValue(card));
                 if (values[1] === values[0] + 1 && 
                     values[2] === values[1] + 1 && 
                     values[3] === values[2] + 1 && 
                     values[4] === values[3] + 1) {
-                    return { valid: true, type: 'Run of 5', points: 40 };
+                    return { valid: true, type: 'Straight', points: 80 };
                 }
                 
                 // Check for a flush (5 cards of the same suit)
