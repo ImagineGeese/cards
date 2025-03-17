@@ -826,8 +826,8 @@
         }
         
         // Get the numeric value of a card for scoring
-        function getCardValue(card) {
-            if (card.value === 'A') return 14;
+        function getCardValue(card, aceAsLow = false) {
+            if (card.value === 'A') return aceAsLow ? 1 : 14;
             if (card.value === 'K') return 13;
             if (card.value === 'Q') return 12;
             if (card.value === 'J') return 11;
@@ -908,6 +908,15 @@
                 if (values[1] === values[0] + 1 && values[2] === values[1] + 1) {
                     return { valid: true, type: 'Run of 3', points: 15 };
                 }
+                
+                // Check if there's an Ace that can be used as 1
+                if (sortedCards.some(card => card.value === 'A')) {
+                    const lowAceValues = sortedCards.map(card => getCardValue(card, card.value === 'A'));
+                    lowAceValues.sort((a, b) => a - b);
+                    if (lowAceValues[1] === lowAceValues[0] + 1 && lowAceValues[2] === lowAceValues[1] + 1) {
+                        return { valid: true, type: 'Run of 3 (A low)', points: 15 };
+                    }
+                }
             }
             
             // Check for a run of 4
@@ -915,6 +924,17 @@
                 const values = sortedCards.map(card => getCardValue(card));
                 if (values[1] === values[0] + 1 && values[2] === values[1] + 1 && values[3] === values[2] + 1) {
                     return { valid: true, type: 'Run of 4', points: 25 };
+                }
+                
+                // Check if there's an Ace that can be used as 1
+                if (sortedCards.some(card => card.value === 'A')) {
+                    const lowAceValues = sortedCards.map(card => getCardValue(card, card.value === 'A'));
+                    lowAceValues.sort((a, b) => a - b);
+                    if (lowAceValues[1] === lowAceValues[0] + 1 && 
+                        lowAceValues[2] === lowAceValues[1] + 1 && 
+                        lowAceValues[3] === lowAceValues[2] + 1) {
+                        return { valid: true, type: 'Run of 4 (A low)', points: 25 };
+                    }
                 }
             }
             
@@ -926,6 +946,18 @@
                     values[3] === values[2] + 1 && 
                     values[4] === values[3] + 1) {
                     return { valid: true, type: 'Straight', points: 80 };
+                }
+                
+                // Check if there's an Ace that can be used as 1
+                if (sortedCards.some(card => card.value === 'A')) {
+                    const lowAceValues = sortedCards.map(card => getCardValue(card, card.value === 'A'));
+                    lowAceValues.sort((a, b) => a - b);
+                    if (lowAceValues[1] === lowAceValues[0] + 1 && 
+                        lowAceValues[2] === lowAceValues[1] + 1 && 
+                        lowAceValues[3] === lowAceValues[2] + 1 && 
+                        lowAceValues[4] === lowAceValues[3] + 1) {
+                        return { valid: true, type: 'Straight (A low)', points: 80 };
+                    }
                 }
                 
                 // Check for a flush (5 cards of the same suit)
@@ -1083,6 +1115,21 @@
                 }
             }
             
+            // Check for runs of 3 with Ace as low
+            if (handCopy.some(card => card.value === 'A')) {
+                const lowAceHandCopy = [...hand];
+                lowAceHandCopy.sort((a, b) => getCardValue(a, a.value === 'A') - getCardValue(b, b.value === 'A'));
+                
+                for (let i = 0; i < lowAceHandCopy.length - 2; i++) {
+                    const val1 = getCardValue(lowAceHandCopy[i], lowAceHandCopy[i].value === 'A');
+                    const val2 = getCardValue(lowAceHandCopy[i + 1], lowAceHandCopy[i + 1].value === 'A');
+                    const val3 = getCardValue(lowAceHandCopy[i + 2], lowAceHandCopy[i + 2].value === 'A');
+                    if (val2 === val1 + 1 && val3 === val2 + 1) {
+                        return true;
+                    }
+                }
+            }
+            
             // Runs of 4
             for (let i = 0; i < handCopy.length - 3; i++) {
                 const val1 = getCardValue(handCopy[i]);
@@ -1091,6 +1138,22 @@
                 const val4 = getCardValue(handCopy[i + 3]);
                 if (val2 === val1 + 1 && val3 === val2 + 1 && val4 === val3 + 1) {
                     return true;
+                }
+            }
+            
+            // Check for runs of 4 with Ace as low
+            if (handCopy.some(card => card.value === 'A')) {
+                const lowAceHandCopy = [...hand];
+                lowAceHandCopy.sort((a, b) => getCardValue(a, a.value === 'A') - getCardValue(b, b.value === 'A'));
+                
+                for (let i = 0; i < lowAceHandCopy.length - 3; i++) {
+                    const val1 = getCardValue(lowAceHandCopy[i], lowAceHandCopy[i].value === 'A');
+                    const val2 = getCardValue(lowAceHandCopy[i + 1], lowAceHandCopy[i + 1].value === 'A');
+                    const val3 = getCardValue(lowAceHandCopy[i + 2], lowAceHandCopy[i + 2].value === 'A');
+                    const val4 = getCardValue(lowAceHandCopy[i + 3], lowAceHandCopy[i + 3].value === 'A');
+                    if (val2 === val1 + 1 && val3 === val2 + 1 && val4 === val3 + 1) {
+                        return true;
+                    }
                 }
             }
             
@@ -1103,6 +1166,22 @@
                 const val5 = getCardValue(handCopy[4]);
                 if (val2 === val1 + 1 && val3 === val2 + 1 && val4 === val3 + 1 && val5 === val4 + 1) {
                     return true;
+                }
+                
+                // Check for straight with Ace as low
+                if (handCopy.some(card => card.value === 'A')) {
+                    const lowAceHandCopy = [...hand];
+                    lowAceHandCopy.sort((a, b) => getCardValue(a, a.value === 'A') - getCardValue(b, b.value === 'A'));
+                    
+                    const val1 = getCardValue(lowAceHandCopy[0], lowAceHandCopy[0].value === 'A');
+                    const val2 = getCardValue(lowAceHandCopy[1], lowAceHandCopy[1].value === 'A');
+                    const val3 = getCardValue(lowAceHandCopy[2], lowAceHandCopy[2].value === 'A');
+                    const val4 = getCardValue(lowAceHandCopy[3], lowAceHandCopy[3].value === 'A');
+                    const val5 = getCardValue(lowAceHandCopy[4], lowAceHandCopy[4].value === 'A');
+                    
+                    if (val2 === val1 + 1 && val3 === val2 + 1 && val4 === val3 + 1 && val5 === val4 + 1) {
+                        return true;
+                    }
                 }
             }
             
