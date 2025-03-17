@@ -574,19 +574,18 @@
     // Load saved game state from localStorage
     function loadGameState() {
       const savedChips = localStorage.getItem('savedChips');
-      const savedCard = localStorage.getItem('savedCard');
-      const gameInProgress = localStorage.getItem('gameInProgress');
+      const savedInitialCard = localStorage.getItem('initialCard');
       
       if (savedChips) {
         chips = parseInt(savedChips);
       }
       
-      if (gameInProgress === 'true' && savedCard) {
+      if (savedInitialCard) {
         try {
-          currentCard = JSON.parse(savedCard);
+          currentCard = JSON.parse(savedInitialCard);
           return true;
         } catch (e) {
-          console.error('Error parsing saved card:', e);
+          console.error('Error parsing saved initial card:', e);
         }
       }
       
@@ -596,13 +595,12 @@
     // Save game state to localStorage
     function saveGameState() {
       localStorage.setItem('savedChips', chips);
-      
+    }
+    
+    // Save the initial card to localStorage
+    function saveInitialCard() {
       if (currentCard) {
-        localStorage.setItem('savedCard', JSON.stringify(currentCard));
-        localStorage.setItem('gameInProgress', gameStarted.toString());
-      } else {
-        localStorage.removeItem('savedCard');
-        localStorage.setItem('gameInProgress', 'false');
+        localStorage.setItem('initialCard', JSON.stringify(currentCard));
       }
     }
     
@@ -623,13 +621,16 @@
       score = 0; // Start at 0 for multiplier
       streak = 0;
       scoreEl.textContent = score.toFixed(2);
+      gameStarted = false;
       
-      // Check if we have a saved game state
-      const hasSavedGame = loadGameState();
+      // Check if we have a saved initial card
+      const hasSavedCard = loadGameState();
       
-      if (!hasSavedGame) {
+      if (!hasSavedCard) {
         // Deal first card only if we don't have a saved card
         currentCard = drawCard();
+        // Save this initial card to localStorage
+        saveInitialCard();
       }
       
       // Update UI
@@ -648,7 +649,7 @@
       wagerInputContainer.style.display = 'flex';
       gameButtons.style.display = 'none';
       
-      // Save initial game state
+      // Save chips state
       saveGameState();
       
       // Show rules modal only on first visit ever (using localStorage)
@@ -727,7 +728,7 @@
       chipsDisplay.textContent = `CHIPS: ${chips}`;
       currentWagerDisplay.textContent = `WAGER: ${wager}`;
       
-      // Save game state after placing wager
+      // Save chips state
       saveGameState();
       
       // Hide wager input, show game buttons
@@ -815,10 +816,14 @@
       chipsDisplay.textContent = `CHIPS: ${chips}`;
       currentWagerDisplay.textContent = `WAGER: 0`;
       
-      // Reset current card for next game (will be randomized on next initGame)
-      currentCard = null;
+      // Generate a new card for the next game
+      currentCard = drawCard();
+      updateCardDisplay(currentCard);
       
-      // Save final game state
+      // Save the new initial card for next game
+      saveInitialCard();
+      
+      // Save chips state
       saveGameState();
       
       // Hide game buttons, show wager input for next game
@@ -867,6 +872,10 @@
 
     restartBtn.addEventListener('click', () => {
       gameOverModal.classList.remove('visible');
+      
+      // We don't need to generate a new card here since initGame will handle it
+      // if there's already a currentCard saved from endGame
+      
       initGame();
     });
     
