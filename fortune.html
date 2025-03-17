@@ -945,7 +945,7 @@
                     values[2] === values[1] + 1 && 
                     values[3] === values[2] + 1 && 
                     values[4] === values[3] + 1) {
-                    return { valid: true, type: 'Straight', points: 80 };
+                    return { valid: true, type: 'Straight', points: 40 };
                 }
                 
                 // Check if there's an Ace that can be used as 1
@@ -956,7 +956,7 @@
                         lowAceValues[2] === lowAceValues[1] + 1 && 
                         lowAceValues[3] === lowAceValues[2] + 1 && 
                         lowAceValues[4] === lowAceValues[3] + 1) {
-                        return { valid: true, type: 'Straight (A low)', points: 80 };
+                        return { valid: true, type: 'Straight (A low)', points: 40 };
                     }
                 }
                 
