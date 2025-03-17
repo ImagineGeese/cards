@@ -606,7 +606,16 @@
     
     // Initialize game
     function initGame() {
-      // Create deck
+      // Reset game state
+      score = 0; // Start at 0 for multiplier
+      streak = 0;
+      scoreEl.textContent = score.toFixed(2);
+      gameStarted = false;
+      
+      // Check if we have a saved initial card
+      const hasSavedCard = loadGameState();
+      
+      // Create a fresh deck regardless of saved card
       deck = [];
       for (let value of values) {
         for (let suit of suits) {
@@ -616,15 +625,6 @@
       
       // Shuffle deck
       shuffleDeck();
-      
-      // Reset game state
-      score = 0; // Start at 0 for multiplier
-      streak = 0;
-      scoreEl.textContent = score.toFixed(2);
-      gameStarted = false;
-      
-      // Check if we have a saved initial card
-      const hasSavedCard = loadGameState();
       
       if (!hasSavedCard) {
         // Deal first card only if we don't have a saved card
@@ -657,6 +657,8 @@
         rulesModal.classList.add('visible');
         localStorage.setItem('hasVisitedBefore', 'true');
       }
+      
+      console.log('Game initialized with card:', currentCard);
     }
     
     // Shuffle deck
@@ -669,9 +671,21 @@
     
     // Draw a card from the deck
     function drawCard() {
-      if (deck.length === 0) return null;
+      if (deck.length === 0) {
+        console.log('Deck is empty, recreating deck');
+        // Recreate deck if empty
+        deck = [];
+        for (let value of values) {
+          for (let suit of suits) {
+            deck.push({ value, suit });
+          }
+        }
+        shuffleDeck();
+      }
+      
       const card = deck.pop();
       deckCountEl.textContent = deck.length;
+      console.log('Drew card:', card);
       return card;
     }
     
@@ -750,15 +764,28 @@
       const currentValue = getCardValue(currentCard);
       const nextValue = getCardValue(nextCard);
       
+      // For debugging - log the values to console
+      console.log(`Current card: ${currentCard.value} (${currentValue}), Next card: ${nextCard.value} (${nextValue}), Guess: ${guess}`);
+      
       let correct = false;
       
       if (guess === 'higher' && nextValue > currentValue) {
         correct = true;
+        console.log('Correct: Higher');
       } else if (guess === 'lower' && nextValue < currentValue) {
         correct = true;
+        console.log('Correct: Lower');
       } else if (guess === 'equal' && nextValue === currentValue) {
         correct = true;
+        console.log('Correct: Equal');
+      } else {
+        console.log('Incorrect guess');
       }
+      
+      // Update the display before checking correctness to show the new card
+      const oldCard = currentCard;
+      currentCard = nextCard;
+      updateCardDisplay(currentCard);
       
       if (correct) {
         streak++;
@@ -774,8 +801,6 @@
         }
         
         scoreEl.textContent = score.toFixed(2); // Format to 2 decimal places
-        currentCard = nextCard;
-        updateCardDisplay(currentCard);
         
         // Save game state after successful guess
         saveGameState();
@@ -786,8 +811,6 @@
         }
       } else {
         showMessage('Wrong!', 'negative');
-        currentCard = nextCard;
-        updateCardDisplay(currentCard);
         endGame(false);
       }
     }
@@ -816,7 +839,21 @@
       chipsDisplay.textContent = `CHIPS: ${chips}`;
       currentWagerDisplay.textContent = `WAGER: 0`;
       
+      // Hide game buttons, show wager input for next game
+      gameButtons.style.display = 'none';
+      wagerInputContainer.style.display = 'flex';
+      
       // Generate a new card for the next game
+      // First recreate and shuffle the deck to ensure we have cards
+      deck = [];
+      for (let value of values) {
+        for (let suit of suits) {
+          deck.push({ value, suit });
+        }
+      }
+      shuffleDeck();
+      
+      // Now draw a new card for the next game
       currentCard = drawCard();
       updateCardDisplay(currentCard);
       
@@ -825,9 +862,6 @@
       
       // Save chips state
       saveGameState();
-      
-      // Hide game buttons, show wager input for next game
-      gameButtons.style.display = 'none';
       
       setTimeout(() => {
         gameOverModal.classList.add('visible');
