@@ -515,6 +515,7 @@
                 <li>Four of a Kind scores 20 points</li>
                 <li>Run (3 cards in order) scores 15 points</li>
                 <li>Run (4 cards in order) scores 25 points</li>
+                <li>Run (5 cards in order) scores 40 points</li>
                 <li>Flush (5 cards same suit) scores 50 points</li>
             </ul>
             <p>Game ends when you run out of cards in the deck or have a hand with no valid sets.</p>
@@ -837,8 +838,17 @@
                 }
             }
             
-            // Check for a flush (5 cards of the same suit)
+            // Check for a run of 5
             if (cards.length === 5) {
+                const values = sortedCards.map(card => getCardValue(card));
+                if (values[1] === values[0] + 1 && 
+                    values[2] === values[1] + 1 && 
+                    values[3] === values[2] + 1 && 
+                    values[4] === values[3] + 1) {
+                    return { valid: true, type: 'Run of 5', points: 40 };
+                }
+                
+                // Check for a flush (5 cards of the same suit)
                 const suit = cards[0].suit;
                 if (cards.every(card => card.suit === suit)) {
                     return { valid: true, type: 'Flush', points: 50 };
@@ -1000,6 +1010,18 @@
                 const val3 = getCardValue(handCopy[i + 2]);
                 const val4 = getCardValue(handCopy[i + 3]);
                 if (val2 === val1 + 1 && val3 === val2 + 1 && val4 === val3 + 1) {
+                    return true;
+                }
+            }
+            
+            // Runs of 5
+            if (handCopy.length === 5) {
+                const val1 = getCardValue(handCopy[0]);
+                const val2 = getCardValue(handCopy[1]);
+                const val3 = getCardValue(handCopy[2]);
+                const val4 = getCardValue(handCopy[3]);
+                const val5 = getCardValue(handCopy[4]);
+                if (val2 === val1 + 1 && val3 === val2 + 1 && val4 === val3 + 1 && val5 === val4 + 1) {
                     return true;
                 }
             }
