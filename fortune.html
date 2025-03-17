@@ -474,6 +474,74 @@
             font-size: 0.9em;
             margin-left: 5px;
         }
+        
+        .confirm-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .confirm-popup.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .confirm-content {
+            background-color: #1a5c2e;
+            background-image: radial-gradient(circle at center, #2a7c4e 0%, #1a5c2e 100%);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .confirm-popup.active .confirm-content {
+            transform: scale(1);
+        }
+        
+        .confirm-popup h3 {
+            color: #f0c14b;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        .confirm-popup p {
+            margin-bottom: 25px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        .confirm-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .confirm-buttons button {
+            min-width: 100px;
+        }
+        
+        .confirm-buttons .cancel-btn {
+            background-color: #666;
+        }
+        
+        .confirm-buttons .cancel-btn:hover {
+            background-color: #777;
+        }
     </style>
 </head>
 <body>
@@ -531,6 +599,17 @@
         </div>
     </div>
     
+    <div class="confirm-popup" id="confirm-popup">
+        <div class="confirm-content">
+            <h3>Confirm New Game</h3>
+            <p>Are you sure you want to start a new game?</p>
+            <div class="confirm-buttons">
+                <button class="cancel-btn">Cancel</button>
+                <button id="confirm-new-game">Confirm</button>
+            </div>
+        </div>
+    </div>
+    
     <script>
         const VALUES = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
         const SUITS = ['hearts', 'diamonds', 'clubs', 'spades'];
@@ -566,6 +645,7 @@
         const playAgainButton = document.getElementById('play-again');
         const deckAreaElement = document.getElementById('deck-area');
         const cardBackElement = document.getElementById('card-back');
+        const confirmPopup = document.getElementById('confirm-popup');
         
         // Initialize the game
         function initGame() {
@@ -1067,7 +1147,9 @@
         
             
         playSetButton.addEventListener('click', playSet);
-        newGameButton.addEventListener('click', initGame);
+        newGameButton.addEventListener('click', () => {
+            confirmPopup.classList.add('active');
+        });
         playAgainButton.addEventListener('click', initGame);
         
             
@@ -1112,6 +1194,66 @@
             if ((event.key === 'N' || event.key === 'n') && event.shiftKey) {
                 event.preventDefault();
                 initGame();
+            }
+        });
+        
+        document.addEventListener('keydown', (event) => {
+            // Handle Escape key for closing the confirmation popup
+            if (event.key === 'Escape' && confirmPopup.classList.contains('active')) {
+                confirmPopup.classList.remove('active');
+                return;
+            }
+            
+            if (['1', '2', '3', '4', '5', 'Enter', 'N'].includes(event.key)) {
+                event.preventDefault();
+            }
+            
+            if (animationInProgress) return;
+            
+            if (event.key >= '1' && event.key <= '5') {
+                const cardIndex = parseInt(event.key) - 1;
+                
+                if (cardIndex >= 0 && cardIndex < hand.length) {
+                    const selectedIndex = selectedCards.indexOf(cardIndex);
+                    if (selectedIndex === -1) {
+                        selectedCards.push(cardIndex);
+                    } else {
+                        selectedCards.splice(selectedIndex, 1);
+                    }
+                    
+                    selectedCards.sort((a, b) => a - b);
+                    
+                    renderHand();
+                    validateSelection();
+                }
+            }
+            
+            if (event.key === 'Enter' && !playSetButton.disabled) {
+                playSet();
+            }
+            
+            // Show confirmation popup instead of starting new game directly
+            if ((event.key === 'N' || event.key === 'n') && event.shiftKey) {
+                event.preventDefault();
+                confirmPopup.classList.add('active');
+            }
+        });
+        
+        // Confirm new game button
+        document.getElementById('confirm-new-game').addEventListener('click', () => {
+            confirmPopup.classList.remove('active');
+            initGame();
+        });
+        
+        // Cancel button in confirmation popup
+        document.querySelector('.cancel-btn').addEventListener('click', () => {
+            confirmPopup.classList.remove('active');
+        });
+        
+        // Close popup when clicking outside the content
+        confirmPopup.addEventListener('click', (e) => {
+            if (e.target === confirmPopup) {
+                confirmPopup.classList.remove('active');
             }
         });
         
