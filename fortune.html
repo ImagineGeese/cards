@@ -407,6 +407,45 @@
             transform: rotate(5deg);
         }
         
+        .next-card .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex: 0 0 auto;
+            height: auto;
+            width: 100%;
+        }
+        
+        .next-card .card-center {
+            font-size: 48px;
+            flex: 1 1 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 80px;
+            width: 100%;
+        }
+        
+        .next-card .card-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transform: rotate(180deg);
+            flex: 0 0 auto;
+            height: auto;
+            width: 100%;
+        }
+        
+        .next-card .card-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .next-card .card-suit {
+            font-size: 24px;
+            line-height: 1;
+        }
+        
         .next-card.hearts, .next-card.diamonds {
             color: #e62e2e;
         }
@@ -423,6 +462,11 @@
             align-items: center;
             color: rgba(255, 255, 255, 0.5);
             font-size: 16px;
+            width: 120px;
+            height: 180px;
+            box-sizing: border-box;
+            padding: 10px;
+            transform: rotate(5deg);
         }
         
         .key-hint {
