@@ -1157,46 +1157,7 @@
             document.querySelector('.rules').classList.toggle('expanded');
         });
         
-            
-        document.addEventListener('keydown', (event) => {
-            
-            if (['1', '2', '3', '4', '5', 'Enter', 'N'].includes(event.key)) {
-                event.preventDefault();
-            }
-            
-            if (animationInProgress) return;
-            
-            
-            if (event.key >= '1' && event.key <= '5') {
-                const cardIndex = parseInt(event.key) - 1;
-                
-                    
-                if (cardIndex >= 0 && cardIndex < hand.length) {
-                        
-                    const selectedIndex = selectedCards.indexOf(cardIndex);
-                    if (selectedIndex === -1) {
-                        selectedCards.push(cardIndex);
-                    } else {
-                        selectedCards.splice(selectedIndex, 1);
-                    }
-                    
-                    selectedCards.sort((a, b) => a - b);
-                    
-                    renderHand();
-                    validateSelection();
-                }
-            }
-            
-            if (event.key === 'Enter' && !playSetButton.disabled) {
-                playSet();
-            }
-            
-            if ((event.key === 'N' || event.key === 'n') && event.shiftKey) {
-                event.preventDefault();
-                initGame();
-            }
-        });
-        
+        // Single keydown event listener to handle all keyboard shortcuts
         document.addEventListener('keydown', (event) => {
             // Handle Escape key for closing the confirmation popup
             if (event.key === 'Escape' && confirmPopup.classList.contains('active')) {
@@ -1204,12 +1165,18 @@
                 return;
             }
             
+            // Prevent default browser behavior for our keyboard shortcuts
             if (['1', '2', '3', '4', '5', 'Enter', 'N'].includes(event.key)) {
                 event.preventDefault();
             }
             
+            // Don't process other keyboard events during animations
             if (animationInProgress) return;
             
+            // Don't process card selection keys when confirmation popup is open
+            if (confirmPopup.classList.contains('active')) return;
+            
+            // Number keys 1-5 select/deselect cards
             if (event.key >= '1' && event.key <= '5') {
                 const cardIndex = parseInt(event.key) - 1;
                 
@@ -1228,11 +1195,12 @@
                 }
             }
             
+            // Enter key plays the selected set if valid
             if (event.key === 'Enter' && !playSetButton.disabled) {
                 playSet();
             }
             
-            // Show confirmation popup instead of starting new game directly
+            // Shift+N shows the new game confirmation popup
             if ((event.key === 'N' || event.key === 'n') && event.shiftKey) {
                 event.preventDefault();
                 confirmPopup.classList.add('active');
