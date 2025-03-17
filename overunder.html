@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>O/U</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      user-select: none;
+    }
+    
+    body {
+      background-color: #0a0a0a;
+      color: #f0f0f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      transition: background-color 0.5s;
+    }
+    
+    .container {
+      width: 100%;
+      max-width: 800px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .title {
+      font-size: 2rem;
+      font-weight: 300;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+    }
+    
+    .score {
+      font-size: 1.5rem;
+      font-weight: 200;
+    }
+    
+    .chips {
+      font-size: 1.5rem;
+      font-weight: 200;
+      color: #C9A12F;
+    }
+    
+    .current-wager {
+      font-size: 1.2rem;
+      font-weight: 200;
+      color: #A88A28; /* Slightly darker than the chips color */
+      margin-top: 5px;
+    }
+    
+    .game-area {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      align-items: center;
+    }
+    
+    .play-area {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      height: 200px;
+    }
+    
+    .card {
+      width: 120px;
+      height: 180px;
+      background-color: #1a1a1a;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2rem;
+      position: relative;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    }
+    
+    .card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 25px rgba(0, 0, 0, 0.7);
+    }
+    
+    .card.played {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .card.highlight {
+      animation: pulse 1s infinite;
+    }
+    
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      border: 1px solid #333;
+      border-radius: 5px;
+    }
+    
+    .card-value {
+      font-size: 3rem;
+      font-weight: 200;
+      z-index: 2;
+    }
+    
+    .card-suit {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      font-size: 1.5rem;
+      z-index: 2;
+    }
+    
+    .deck {
+      width: 120px;
+      height: 180px;
+      background-color: #171717;
+      border-radius: 10px;
+      position: relative;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .deck:hover {
+      transform: translateY(-5px) rotate(1deg);
+    }
+    
+    .deck::before {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      border: 1px solid #333;
+      border-radius: 5px;
+    }
+    
+    .deck-count {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+    
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 20px;
+      height: 50px; /* Fixed height to maintain layout stability */
+    }
+    
+    button {
+      background-color: transparent;
+      color: #f0f0f0;
+      border: 1px solid #333;
+      padding: 10px 20px;
+      font-size: 1rem;
+      font-weight: 300;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    button:hover {
+      background-color: #333;
+    }
+    
+    button:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    
+    .message {
+      height: 50px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.2rem;
+      font-weight: 200;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    
+    .message.visible {
+      opacity: 1;
+    }
+    
+    .special {
+      color: #C9A12F;
+    }
+    
+    .negative {
+      color: #FF3A3A;
+    }
+
+    .slash {
+      color: #C9A12F;
+    }
+    
+    .positive {
+      color: #5FEBAD;
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.5s forwards;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s;
+    }
+    
+    .modal.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    
+    .modal-content {
+      background-color: #1a1a1a;
+      padding: 40px;
+      border-radius: 10px;
+      max-width: 500px;
+      width: 90%;
+      text-align: center;
+    }
+    
+    .modal h2 {
+      font-size: 2rem;
+      font-weight: 300;
+      margin-bottom: 20px;
+      letter-spacing: 3px;
+    }
+    
+    .modal p {
+      font-size: 1.2rem;
+      font-weight: 200;
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+    
+    .wager-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      margin: 20px 0;
+    }
+    
+    .wager-input-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      background-color: transparent;
+      padding: 10px 20px;
+      border: 1px solid #333;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      height: 50px;
+    }
+    
+    .wager-input-container:hover {
+      background-color: #333;
+    }
+    
+    .wager-text, .chips-text {
+      font-size: 1rem;
+      font-weight: 300;
+      color: #f0f0f0;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: color 0.3s ease;
+    }
+    
+    .wager-input {
+      background-color: transparent;
+      color: #A88A28; /* Darker gold initially */
+      border: none;
+      font-size: 1rem;
+      font-weight: 300;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      width: 60px;
+      text-align: center;
+      transition: all 0.3s ease;
+      -moz-appearance: textfield; /* Firefox */
+      letter-spacing: 1px;
+    }
+    
+    .wager-input.edited {
+      color: #C9A12F; /* Brighter gold after editing */
+    }
+    
+    .wager-input.invalid {
+      color: #FF3A3A; /* Red for invalid amount */
+    }
+    
+    /* Remove arrows for Chrome, Safari, Edge, Opera */
+    .wager-input::-webkit-outer-spin-button,
+    .wager-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    
+    .wager-input:focus {
+      outline: none;
+    }
+    
+    .wager-input::placeholder {
+      color: #666;
+    }
+    
+    .wager-value {
+      font-size: 2rem;
+      font-weight: 300;
+      color: #C9A12F;
+    }
+    
+    .chip {
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #C9A12F;
+      margin-right: 5px;
+      position: relative;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    
+    .chip::before {
+      content: '';
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      right: 5px;
+      bottom: 5px;
+      border-radius: 50%;
+      border: 2px dashed rgba(0,0,0,0.2);
+    }
+
+    .game-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .chips-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .start-game-btn {
+      margin-top: 10px;
+      padding: 12px 30px;
+      font-size: 1.2rem;
+      background-color: #C9A12F;
+      color: #0a0a0a;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .start-game-btn:hover {
+      background-color: #e0b93e;
+      transform: translateY(-2px);
+    }
+
+    .help-btn {
+      background-color: transparent;
+      color: #888;
+      border: 1px solid #333;
+      padding: 5px 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .help-btn:hover {
+      background-color: #333;
+      color: #f0f0f0;
+    }
+    
+    .game-controls {
+      height: 50px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="title">OVER <span class="slash">/</span> UNDER</h1>
+      <div class="score">MULTIPLIER: <span id="score">0.00</span>x</div>
+    </div>
+    
+    <div class="game-info">
+      <div class="chips-info">
+        <div class="chips" id="chips-display">CHIPS: 1000</div>
+        <div class="current-wager" id="current-wager-display">WAGER: 0</div>
+      </div>
+      <button class="help-btn" id="help-btn">HOW TO PLAY</button>
+    </div>
+    
+    <div class="game-area">
+      <div class="play-area">
+        <div class="deck" id="deck">
+          <div class="deck-count" id="deck-count">20</div>
+        </div>
+        <div class="card" id="played-card">
+          <span class="card-value" id="card-value">?</span>
+          <span class="card-suit" id="card-suit"></span>
+        </div>
+      </div>
+      
+      <div class="message" id="message"></div>
+      
+      <div class="game-controls" id="game-controls">
+        <!-- This area will contain either the wager input or the game buttons -->
+        <div class="wager-input-container" id="wager-input-container">
+          <span class="wager-text">Wager</span>
+          <input type="number" class="wager-input" id="wager-input" min="1" max="999999" value="100" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value.length > 6) this.value = this.value.slice(0, 6);">
+          <span class="chips-text">chips</span>
+        </div>
+        
+        <div class="controls" id="game-buttons" style="display: none;">
+          <button id="higher-btn">Higher</button>
+          <button id="lower-btn">Lower</button>
+          <button id="equal-btn">Equal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal" id="rules-modal">
+    <div class="modal-content">
+      <h2>HOW TO PLAY</h2>
+      <p>
+        Predict if the next card will be higher, lower, or equal to the current card.
+        <br><br>
+        - Correct prediction: +0.25x multiplier
+        <br>
+        <span class="special">- Perfect streak of 3:</span> +0.75x bonus multiplier
+        <br>
+        <span class="negative">- Wrong prediction:</span> Game over
+        <br><br>
+        Card values: A < 2 < 3...10 < J < Q < K 
+        <br><br>
+        Set your wager and try to build the highest multiplier!
+        <br>
+        When the game ends, you'll receive chips equal to <span class="special">Wager × Multiplier</span>
+      </p>
+      
+      <button id="close-rules-btn">CLOSE</button>
+    </div>
+  </div>
+  
+  <div class="modal" id="game-over-modal">
+    <div class="modal-content">
+      <h2>GAME OVER</h2>
+      <p>Your final multiplier: <span id="final-score">0.00</span>x</p>
+      <p>Chips won: <span class="special"><span id="chips-won">0</span></span></p>
+      <p>Total chips: <span class="special"><span id="total-chips">1000</span></span></p>
+      <button id="restart-btn">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <script>
+    // Game state
+    let deck = [];
+    let currentCard = null;
+    let score = 0; // Start at 0 for multiplier
+    let streak = 0;
+    let gameStarted = false;
+    let chips = 1000;
+    let wager = 100;
+    
+    // DOM elements
+    const deckEl = document.getElementById('deck');
+    const deckCountEl = document.getElementById('deck-count');
+    const playedCardEl = document.getElementById('played-card');
+    const cardValueEl = document.getElementById('card-value');
+    const cardSuitEl = document.getElementById('card-suit');
+    const scoreEl = document.getElementById('score');
+    const messageEl = document.getElementById('message');
+    const higherBtn = document.getElementById('higher-btn');
+    const lowerBtn = document.getElementById('lower-btn');
+    const equalBtn = document.getElementById('equal-btn');
+    const rulesModal = document.getElementById('rules-modal');
+    const gameOverModal = document.getElementById('game-over-modal');
+    const finalScoreEl = document.getElementById('final-score');
+    const restartBtn = document.getElementById('restart-btn');
+    const chipsDisplay = document.getElementById('chips-display');
+    const currentWagerDisplay = document.getElementById('current-wager-display');
+    const chipsWon = document.getElementById('chips-won');
+    const totalChips = document.getElementById('total-chips');
+    const helpBtn = document.getElementById('help-btn');
+    const closeRulesBtn = document.getElementById('close-rules-btn');
+    
+    // Main page wager elements
+    const wagerInputContainer = document.getElementById('wager-input-container');
+    const wagerInput = document.getElementById('wager-input');
+    const gameButtons = document.getElementById('game-buttons');
+    
+    // Card values and suits
+    const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+    const suits = ['♠', '♥', '♦', '♣'];
+    const suitColors = {
+      '♠': '#ffffff',
+      '♥': '#FF3A3A',
+      '♦': '#FF3A3A',
+      '♣': '#ffffff'
+    };
+    
+    // Check if this is the first visit
+    const hasVisitedBefore = localStorage.getItem('hasVisitedBefore');
+    
+    // Load saved game state from localStorage
+    function loadGameState() {
+      const savedChips = localStorage.getItem('savedChips');
+      const savedCard = localStorage.getItem('savedCard');
+      const gameInProgress = localStorage.getItem('gameInProgress');
+      
+      if (savedChips) {
+        chips = parseInt(savedChips);
+      }
+      
+      if (gameInProgress === 'true' && savedCard) {
+        try {
+          currentCard = JSON.parse(savedCard);
+          return true;
+        } catch (e) {
+          console.error('Error parsing saved card:', e);
+        }
+      }
+      
+      return false;
+    }
+    
+    // Save game state to localStorage
+    function saveGameState() {
+      localStorage.setItem('savedChips', chips);
+      
+      if (currentCard) {
+        localStorage.setItem('savedCard', JSON.stringify(currentCard));
+        localStorage.setItem('gameInProgress', gameStarted.toString());
+      } else {
+        localStorage.removeItem('savedCard');
+        localStorage.setItem('gameInProgress', 'false');
+      }
+    }
+    
+    // Initialize game
+    function initGame() {
+      // Create deck
+      deck = [];
+      for (let value of values) {
+        for (let suit of suits) {
+          deck.push({ value, suit });
+        }
+      }
+      
+      // Shuffle deck
+      shuffleDeck();
+      
+      // Reset game state
+      score = 0; // Start at 0 for multiplier
+      streak = 0;
+      scoreEl.textContent = score.toFixed(2);
+      
+      // Check if we have a saved game state
+      const hasSavedGame = loadGameState();
+      
+      if (!hasSavedGame) {
+        // Deal first card only if we don't have a saved card
+        currentCard = drawCard();
+      }
+      
+      // Update UI
+      updateCardDisplay(currentCard);
+      deckCountEl.textContent = deck.length;
+      chipsDisplay.textContent = `CHIPS: ${chips}`;
+      currentWagerDisplay.textContent = `WAGER: 0`;
+      
+      // Update wager input based on available chips
+      wagerInput.value = Math.min(wager, chips);
+      wagerInput.classList.remove('edited'); // Reset edited state
+      wagerInput.classList.remove('invalid'); // Reset invalid state
+      validateWager(); // Check initial wager validity
+      
+      // Show wager input, hide game buttons
+      wagerInputContainer.style.display = 'flex';
+      gameButtons.style.display = 'none';
+      
+      // Save initial game state
+      saveGameState();
+      
+      // Show rules modal only on first visit ever (using localStorage)
+      if (!hasVisitedBefore) {
+        rulesModal.classList.add('visible');
+        localStorage.setItem('hasVisitedBefore', 'true');
+      }
+    }
+    
+    // Shuffle deck
+    function shuffleDeck() {
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+    }
+    
+    // Draw a card from the deck
+    function drawCard() {
+      if (deck.length === 0) return null;
+      const card = deck.pop();
+      deckCountEl.textContent = deck.length;
+      return card;
+    }
+    
+    // Update card display
+    function updateCardDisplay(card) {
+      if (!card) return;
+      
+      cardValueEl.textContent = card.value;
+      cardSuitEl.textContent = card.suit;
+      cardSuitEl.style.color = suitColors[card.suit];
+      
+      // Add fade-in effect
+      playedCardEl.classList.remove('fade-in');
+      void playedCardEl.offsetWidth; // Force reflow
+      playedCardEl.classList.add('fade-in');
+    }
+    
+    // Get numeric value of card
+    function getCardValue(card) {
+      if (card.value === 'A') return 1;
+      if (card.value === 'J') return 11;
+      if (card.value === 'Q') return 12;
+      if (card.value === 'K') return 13;
+      return parseInt(card.value);
+    }
+    
+    // Enable or disable game controls
+    function setControlsEnabled(enabled) {
+      higherBtn.disabled = !enabled;
+      lowerBtn.disabled = !enabled;
+      equalBtn.disabled = !enabled;
+    }
+    
+    // Start the game
+    function startGame() {
+      // Set wager from input
+      wager = parseInt(wagerInput.value);
+      
+      // Validate wager
+      if (isNaN(wager) || wager <= 0) {
+        showMessage('Please enter a valid wager amount!', 'negative');
+        return;
+      }
+      
+      if (wager > chips) {
+        showMessage('Not enough chips for this wager!', 'negative');
+        return;
+      }
+      
+      gameStarted = true;
+      
+      // Deduct chips
+      chips -= wager;
+      chipsDisplay.textContent = `CHIPS: ${chips}`;
+      currentWagerDisplay.textContent = `WAGER: ${wager}`;
+      
+      // Save game state after placing wager
+      saveGameState();
+      
+      // Hide wager input, show game buttons
+      wagerInputContainer.style.display = 'none';
+      gameButtons.style.display = 'flex';
+      
+      // Enable game controls
+      setControlsEnabled(true);
+      
+      // Show message to start
+      showMessage('Make your prediction', 'special');
+    }
+    
+    // Handle player's guess
+    function handleGuess(guess) {
+      const nextCard = drawCard();
+      if (!nextCard) return;
+      
+      const currentValue = getCardValue(currentCard);
+      const nextValue = getCardValue(nextCard);
+      
+      let correct = false;
+      
+      if (guess === 'higher' && nextValue > currentValue) {
+        correct = true;
+      } else if (guess === 'lower' && nextValue < currentValue) {
+        correct = true;
+      } else if (guess === 'equal' && nextValue === currentValue) {
+        correct = true;
+      }
+      
+      if (correct) {
+        streak++;
+        score += 0.25; // Increment by 0.25 instead of 1
+        
+        // Bonus for streak of 3
+        if (streak === 3) {
+          score += 0.75; // Add 0.75 bonus instead of 3
+          streak = 0;
+          showMessage('Perfect streak! +0.75x bonus multiplier', 'special');
+        } else {
+          showMessage('Correct!', 'positive');
+        }
+        
+        scoreEl.textContent = score.toFixed(2); // Format to 2 decimal places
+        currentCard = nextCard;
+        updateCardDisplay(currentCard);
+        
+        // Save game state after successful guess
+        saveGameState();
+        
+        // Check if deck is empty
+        if (deck.length === 0) {
+          endGame(true);
+        }
+      } else {
+        showMessage('Wrong!', 'negative');
+        currentCard = nextCard;
+        updateCardDisplay(currentCard);
+        endGame(false);
+      }
+    }
+    
+    // Show message
+    function showMessage(text, type) {
+      messageEl.textContent = text;
+      messageEl.className = 'message ' + type + ' visible';
+      
+      setTimeout(() => {
+        messageEl.classList.remove('visible');
+      }, 2000);
+    }
+    
+    // End game
+    function endGame(win) {
+      gameStarted = false;
+      finalScoreEl.textContent = score.toFixed(2); // Format to 2 decimal places
+      
+      // Calculate chips won
+      const chipsEarned = Math.floor(wager * score);
+      chips += chipsEarned;
+      
+      chipsWon.textContent = chipsEarned;
+      totalChips.textContent = chips;
+      chipsDisplay.textContent = `CHIPS: ${chips}`;
+      currentWagerDisplay.textContent = `WAGER: 0`;
+      
+      // Reset current card for next game (will be randomized on next initGame)
+      currentCard = null;
+      
+      // Save final game state
+      saveGameState();
+      
+      // Hide game buttons, show wager input for next game
+      gameButtons.style.display = 'none';
+      
+      setTimeout(() => {
+        gameOverModal.classList.add('visible');
+      }, 1000);
+    }
+    
+    // Event listeners
+    deckEl.addEventListener('click', () => {
+      if (!gameStarted) return;
+      showMessage('Make your prediction', 'special');
+    });
+
+    higherBtn.addEventListener('click', () => {
+      if (!gameStarted) return;
+      handleGuess('higher');
+    });
+
+    lowerBtn.addEventListener('click', () => {
+      if (!gameStarted) return;
+      handleGuess('lower');
+    });
+
+    equalBtn.addEventListener('click', () => {
+      if (!gameStarted) return;
+      handleGuess('equal');
+    });
+
+    helpBtn.addEventListener('click', () => {
+      rulesModal.classList.add('visible');
+    });
+
+    closeRulesBtn.addEventListener('click', () => {
+      rulesModal.classList.remove('visible');
+    });
+
+    // Click on wager container to start game
+    wagerInputContainer.addEventListener('click', (e) => {
+      // Don't trigger if clicking on the input itself
+      if (e.target === wagerInput) return;
+      startGame();
+    });
+
+    restartBtn.addEventListener('click', () => {
+      gameOverModal.classList.remove('visible');
+      initGame();
+    });
+    
+    // Wager input validation
+    wagerInput.addEventListener('input', () => {
+      // Ensure only integers are entered (no decimals)
+      if (wagerInput.value.includes('.')) {
+        wagerInput.value = wagerInput.value.split('.')[0];
+      }
+      
+      // Limit to 6 digits
+      if (wagerInput.value.length > 6) {
+        wagerInput.value = wagerInput.value.slice(0, 6);
+      }
+      
+      // Mark as edited to change color
+      wagerInput.classList.add('edited');
+      
+      // Validate the wager
+      validateWager();
+    });
+
+    // Validate wager amount
+    function validateWager() {
+      const value = parseInt(wagerInput.value);
+      
+      if (isNaN(value) || value <= 0) {
+        wagerInput.classList.add('invalid');
+        return false;
+      }
+      
+      if (value > chips) {
+        wagerInput.classList.add('invalid');
+        return false;
+      }
+      
+      wagerInput.classList.remove('invalid');
+      return true;
+    }
+
+    // Initialize game on load
+    window.addEventListener('DOMContentLoaded', initGame);
+  </script>
+</body>
+</html>
